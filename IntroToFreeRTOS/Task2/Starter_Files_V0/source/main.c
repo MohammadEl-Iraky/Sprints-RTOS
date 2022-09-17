@@ -83,10 +83,11 @@
 static void prvSetupHardware( void );
 /*-----------------------------------------------------------*/
 
-TaskHandle_t xLedTaskHandle1 = NULL;
-TaskHandle_t xLedTaskHandle2 = NULL;
-TaskHandle_t xLedTaskHandle3 = NULL;
+TaskHandle_t xLedTaskHandle1 = NULL;	/* handle of the first task to toggle the LED every 100ms*/
+TaskHandle_t xLedTaskHandle2 = NULL;	/* handle of the second task to toggle the LED every 500ms*/
+TaskHandle_t xLedTaskHandle3 = NULL;	/* handle of the second task to toggle the LED every 1sec */
 
+/* The first task that will toggle the LED with a period of 100 ms */
 void vLedTask1( void * pvParameters )
 {
     for( ;; )
@@ -98,7 +99,7 @@ void vLedTask1( void * pvParameters )
     }
 }
 
-
+/* The second task that will toggle the LED with a period of 500 ms */
 void vLedTask2( void * pvParameters )
 {
     for( ;; )
@@ -110,7 +111,7 @@ void vLedTask2( void * pvParameters )
     }
 }
 
-
+/* The Third task that will toggle the LED with a period of 1sec */
 void vLedTask3( void * pvParameters )
 {
     for( ;; )
@@ -133,6 +134,8 @@ int main( void )
 	prvSetupHardware();
 	
 	/* Create Tasks here */
+	
+	/* The first task to toggle the LED every 100ms */
 	xTaskCreate(
 								vLedTask1 ,       /* Function that implements the task. */
 								"LED Task1",          /* Text name for the task. */
@@ -141,6 +144,7 @@ int main( void )
 								1,/* Priority at which the task is created. */
 								&xLedTaskHandle1 );      /* Used to pass out the created task's handle. */
 
+	/* The second task to toggle the LED every 500ms */
 	xTaskCreate(
 								vLedTask2 ,       /* Function that implements the task. */
 								"LED Task2",          /* Text name for the task. */
@@ -148,7 +152,8 @@ int main( void )
 								( void * ) 0,    /* Parameter passed into the task. */
 								1,/* Priority at which the task is created. */
 								&xLedTaskHandle2 );      /* Used to pass out the created task's handle. */
-
+		
+	/* The third task to toggle the LED every 1 sec */
 	xTaskCreate(
 								vLedTask3 ,       /* Function that implements the task. */
 								"LED Task3",          /* Text name for the task. */

@@ -83,14 +83,18 @@
 static void prvSetupHardware( void );
 /*-----------------------------------------------------------*/
 
-TaskHandle_t xLedTaskHandle = NULL;
+
+TaskHandle_t xLedTaskHandle = NULL;		/* LED task's handle */
 
 
-
+/* A task that will toggle the LED with a period of 1 sec */
 void vLedTask( void * pvParameters )
 {
+		/* Loop indefinitely */
     for( ;; )
     {
+			/* There is no toggle API so we can just write high to the pin, wait 1 sec,
+			write low, wait for another 1 sec, and then repeat the process */
 			GPIO_write( PORT_0, PIN0, PIN_IS_HIGH);
 			vTaskDelay(1000);
 			GPIO_write( PORT_0, PIN0, PIN_IS_LOW);
@@ -98,24 +102,23 @@ void vLedTask( void * pvParameters )
     }
 }
 
-
-
 /*
  * Application entry point:
  * Starts all the other tasks, then starts the scheduler. 
  */
+
 int main( void )
 {
 	/* Setup the hardware for use with the Keil demo board. */
 	prvSetupHardware();
 	
 	/* Create Tasks here */
-	xTaskCreate(
+			xTaskCreate(
 								vLedTask ,       /* Function that implements the task. */
-								"LED Task",          /* Text name for the task. */
-								50,      /* Stack size in words, not bytes. */
-								( void * ) 0,    /* Parameter passed into the task. */
-								1,/* Priority at which the task is created. */
+								"LED Task",       /* Text name for the task. */
+								50,      					/* Stack size in words, not bytes. */
+								( void * ) 0,    	/* Parameter passed into the task. */
+								1,								/* Priority at which the task is created. */
 								&xLedTaskHandle );      /* Used to pass out the created task's handle. */
 
 	/* Now all the tasks have been started - start the scheduler.

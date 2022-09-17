@@ -91,6 +91,7 @@ TaskHandle_t xButtonTaskHandle = NULL;
 TaskHandle_t xLedTask1_Handle = NULL;
 TaskHandle_t xLedTask2_Handle = NULL;
 
+/* Task to toggle the LED every 400ms */
 void vLedTask1( void * pvParameters )
 {
     for( ;; )
@@ -102,7 +103,7 @@ void vLedTask1( void * pvParameters )
     }
 }
 
-
+/* Task to toggle the LED every 100ms */
 void vLedTask2( void * pvParameters )
 {
     for( ;; )
@@ -114,44 +115,51 @@ void vLedTask2( void * pvParameters )
     }
 }
 
-
+/* In this task we read the button state every 100ms, and according to how long it is pressed, we either turn off the LED, or toggle it every 100 or 400ms */
 void vButtonTask( void * pvParameters )
 {
-		uint8_t buttonCurrentState = RELEASED;
-		uint8_t buttonPrevState = RELEASED;
+		uint8_t buttonCurrentState = RELEASED;	
+		uint8_t buttonPrevState = RELEASED;			/* Stores the value of the previous button read operation */
 		uint16_t buttonPressCount = 0;
     
 		for( ;; )
     {
 				buttonCurrentState = GPIO_read( PORT_0, PIN0 );
+				/* Here after reading the current button state, we compare it with previous state.
+					- If the button was high in the previous iteration and it is still high, add 100ms to the counter			
+			*/
 				if( (PIN_IS_HIGH == buttonPrevState) && (PIN_IS_HIGH == buttonCurrentState) )
 				{
 					buttonPressCount++;			
 				}
 				else if( (PIN_IS_HIGH == buttonPrevState) && (PIN_IS_LOW == buttonCurrentState ) )
 				{
-						if( buttonPressCount < 10 /*20*/ ){
+					/* If it was high and then it became low which means the user released the button, then according to how long the button has been pressed, we select one 
+					of our 3 states */
+					/* If the button was pressed less than 2 secs, turn OFF the LED and suspend the 2 other tasks */
+						if( buttonPressCount < 20 ){				
 							GPIO_write(PORT_0, PIN1, PIN_IS_LOW );
 							vTaskSuspend( xLedTask1_Handle );
 							vTaskSuspend( xLedTask2_Handle );
 						}
-						else if( buttonPressCount <20 /*40*/)
+						/* If the button was pressed between 2 and 4s, we toggle the led with 400ms periodicity, so we suspend task 2 and resume task 1 */
+						else if( buttonPressCount < 40)
 						{
 							vTaskSuspend( xLedTask2_Handle );
 							vTaskResume( xLedTask1_Handle );
 						}
+						/* If the button was pressed between 2 and 4s, we toggle the led with 400ms periodicity, so we suspend task 2 and resume task 1 */
 						else
 						{
 							vTaskSuspend( xLedTask1_Handle );
 							vTaskResume( xLedTask2_Handle );
 						}
-	
+						/* Reset the counter as the button was released */
 						buttonPressCount = 0;
 				}
-				
+				/* Store the current state to use it in the next iteration */
 				buttonPrevState = buttonCurrentState;
 				vTaskDelay(100);
-
 	}
 }
 
@@ -166,6 +174,7 @@ int main( void )
 	prvSetupHardware();
 	
 	/* Create Tasks here */
+	/* Task to toggle the LED every 400ms */
 	xTaskCreate(
 								vLedTask1 ,       /* Function that implements the task. */
 								"LED Task1",          /* Text name for the task. */
@@ -173,7 +182,8 @@ int main( void )
 								( void * ) 0,    /* Parameter passed into the task. */
 								1,/* Priority at which the task is created. */
 								&xLedTask1_Handle );      /* Used to pass out the created task's handle. */
-
+								
+	/* Task to toggle the LED every 100ms */
 	xTaskCreate(
 								vLedTask2 ,       /* Function that implements the task. */
 								"LED Task2",          /* Text name for the task. */
@@ -181,7 +191,8 @@ int main( void )
 								( void * ) 0,    /* Parameter passed into the task. */
 								1,/* Priority at which the task is created. */
 								&xLedTask2_Handle );      /* Used to pass out the created task's handle. */
-
+								
+	/* Task to read the button state every 100ms and toggle the LED accordingly */
 	xTaskCreate(
 								vButtonTask ,       /* Function that implements the task. */
 								"Button Task3",          /* Text name for the task. */
